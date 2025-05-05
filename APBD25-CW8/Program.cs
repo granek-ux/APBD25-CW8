@@ -1,3 +1,4 @@
+using APBD25_CW8;
 using APBD25_CW8.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,3 +22,16 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+Console.Write(ReadFromFiele.FileRead("script.sql"));
+
+// TripsService tripsService = new TripsService();
+// Console.WriteLine(
+// await tripsService.SetupBase(CancellationToken.None));
+
+// var tripDtos = await tripsService.GetTrips(CancellationToken.None);
+
+// foreach (var tripDto in tripDtos)
+// {
+    // Console.WriteLine(tripDto.Id);
+// }

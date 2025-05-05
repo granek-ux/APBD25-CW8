@@ -1,3 +1,9 @@
+DROP DATABASE IF EXISTS apbd;
+
+CREATE DATABASE apbd;
+
+USE apbd;
+     
 -- Create tables
 CREATE TABLE Client (
     IdClient INT PRIMARY KEY IDENTITY(1,1),
