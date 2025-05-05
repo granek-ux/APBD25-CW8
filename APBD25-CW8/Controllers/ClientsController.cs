@@ -1,4 +1,3 @@
-using APBD25_CW8.Models.DTOs;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,14 +5,13 @@ namespace APBD25_CW8.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class TripsController : ControllerBase
+    public class ClientsController : ControllerBase
     {
 
         [HttpGet]
-        public IActionResult GetTrips()
+        public IActionResult Get()
         {
-            return Ok("api/Trips");
+            return Ok("200");
         }
-        
     }
 }
