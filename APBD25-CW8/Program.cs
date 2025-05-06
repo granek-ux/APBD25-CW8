@@ -37,16 +37,3 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
-
-// Console.Write(File.ReadAllText("script.sql"));
-
-// TripsService tripsService = new TripsService();
-// Console.WriteLine(
-// await tripsService.SetupBase(CancellationToken.None));
-
-// var tripDtos = await tripsService.GetTrips(CancellationToken.None);
-
-// foreach (var tripDto in tripDtos)
-// {
-    // Console.WriteLine(tripDto.Id);
-// }
