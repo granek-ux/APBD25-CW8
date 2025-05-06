@@ -26,15 +26,61 @@ public class ClientsService : IClientsService
                 int id = -1;
                 while (await reader.ReadAsync())
                 {
-                   id = reader.GetInt32(0);
+                    id = reader.GetInt32(0);
                 }
+
                 return id;
             }
         }
     }
 
-    public Task<TripDTO> AddTripToClient(int id, int tripId, CancellationToken cancellationToken)
+    public async Task<int> AddTripToClient(int id, int tripId, CancellationToken cancellationToken)
     {
+        string checkClientCommand = @"SELECT 1 FROM Client c WHERE c.IdClient = @id ";
+        string checkTripCommand = "SELECT MaxPeople FROM Trip WHERE IdTrip = @TripId";
+        using (SqlConnection conn = new SqlConnection(_connectionString))
+        {
+            await conn.OpenAsync(cancellationToken);
+            using (SqlCommand cmd = new SqlCommand(checkClientCommand, conn))
+            {
+                cmd.Parameters.AddWithValue("@id", id);
+                cmd.Parameters.AddWithValue("@tripId", tripId);
+                
+                using (var reader = await cmd.ExecuteReaderAsync(cancellationToken))
+                {
+                    int tmpid = -1;
+                    while (await reader.ReadAsync())
+                    {
+                        tmpid = reader.GetInt32(0);
+                    }
+
+                    if (tmpid == -1)
+                        return tmpid;
+                }
+            }
+
+            var maxpeople = -1;
+            using (SqlCommand cmd = new SqlCommand(checkTripCommand, conn))
+            {
+                cmd.Parameters.AddWithValue("@id", id);
+                cmd.Parameters.AddWithValue("@tripId", tripId);
+              
+                using (var reader = await cmd.ExecuteReaderAsync(cancellationToken))
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        maxpeople = reader.GetInt32(0);
+                    }
+
+                    if (maxpeople == -1)
+                        return maxpeople;
+                }
+                
+                
+            }
+        }
+
+        return 200;
         throw new NotImplementedException();
     }
 

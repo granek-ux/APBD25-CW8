@@ -39,9 +39,11 @@ namespace APBD25_CW8.Controllers
 
         // PUT /api/clients/{id}/trips/{tripId
         [HttpPut("/{id}/trips/{tripId}")]
-        public async Task<IActionResult> UpdateTrip(int id, int tripId, [FromBody] ClientDTO client,
-            CancellationToken cancellationToken)
+        public async Task<IActionResult> UpdateTrip(int id, int tripId, CancellationToken cancellationToken)
         {
+            var code = await _clientsService.AddTripToClient(id, tripId, cancellationToken);
+            if (code <= 0)
+                return BadRequest();
             return Created();
         }
 
