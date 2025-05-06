@@ -14,7 +14,7 @@ public class TripsService : ITripsService
 
     private readonly string sqlFileName = "script.sql";
 
-    public async Task<List<TripDTO>> GetTrips(CancellationToken cancellationToken)
+    public async Task<List<TripDTO>> GetTripsAsync(CancellationToken cancellationToken)
     {
         var trips = new List<TripDTO>();
 
@@ -43,7 +43,7 @@ public class TripsService : ITripsService
         return trips;
     }
 
-    public async Task<List<TripDTO>> GetTripsById(int id, CancellationToken cancellationToken)
+    public async Task<List<TripDTO>> GetTripsByIdAsync(int id, CancellationToken cancellationToken)
     {
         var trips = new List<TripDTO>();
 
@@ -77,7 +77,7 @@ public class TripsService : ITripsService
 
     public async Task<int> SetupBase(CancellationToken cancellationToken)
     {
-        var command = ReadFromFiele.FileRead(sqlFileName);
+        var command = await File.ReadAllTextAsync(sqlFileName, cancellationToken);
         using (SqlConnection conn = new SqlConnection(_connectionStringAdmin))
         using (SqlCommand cmd = new SqlCommand(command, conn))
         {
