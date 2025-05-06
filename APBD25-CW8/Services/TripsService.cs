@@ -49,11 +49,15 @@ public class TripsService : ITripsService
         return trips;
     }
 
-    public async Task<List<TripDTO>> GetTripsByIdAsync(int id, CancellationToken cancellationToken)
+    public async Task<List<TripForClientDTO>> GetTripsByIdAsync(int id, CancellationToken cancellationToken)
     {
-        var trips = new List<TripDTO>();
+        var trips = new List<TripForClientDTO>();
 
-        string command = "SELECT IdTrip, Name FROM Trip where Id=@id";
+        string command = @"Select t.IdTrip, t.Name AS TripName, t.Description, t.DateFrom, t.DateTo, t.MaxPeople, C.Name AS CountryName, CT2.PaymentDate, CT2.RegisteredAt from Trip t 
+                            join dbo.Country_Trip CT on t.IdTrip = CT.IdTrip 
+                            join dbo.Country C on C.IdCountry = CT.IdCountry 
+                            join dbo.Client_Trip CT2 on CT.IdTrip = CT2.IdTrip 
+                            join dbo.Client C2 on C2.IdClient = CT2.IdClient where C2.IdClient=@id";
 
         using (SqlConnection conn = new SqlConnection(_connectionString))
         using (SqlCommand cmd = new SqlCommand(command, conn))
@@ -66,32 +70,34 @@ public class TripsService : ITripsService
             {
                 while (await reader.ReadAsync())
                 {
-                    int idOrdinal = reader.GetOrdinal("IdTrip");
-                    if (trips.All(t => t.Id != idOrdinal))
+                    int sqlid = (int)reader["IdTrip"];
+                    if (trips.All(t => t.TripDto.Id != sqlid))
                     {
-                        trips.Add(new TripDTO()
+                        trips.Add(new TripForClientDTO()
                         {
-                            Id = reader.GetInt32(idOrdinal),
-                            Name = reader.GetString(1),
-                            Description = reader.GetString(2),
-                            DateTo = reader.GetDateTime(3),
-                            DateFrom = reader.GetDateTime(4),
-                            MaxPeople = reader.GetInt32(5),
-                            Countries = []
+                            TripDto = new TripDTO()
+                            {
+                                Id = sqlid,
+                                Name = (string)reader["TripName"],
+                                Description = reader["Description"] as string,
+                                DateFrom = (DateTime)reader["DateFrom"],
+                                DateTo = (DateTime)reader["DateTo"],
+                                MaxPeople = (int)reader["MaxPeople"],
+                                Countries = []  
+                            },
+                                PaymentDate = (int)reader["PaymentDate"],
+                                RegisteredAt = (int)reader["RegisteredAt"],
                         });
                     }
                     
-                    trips.Find(t => t.Id == reader.GetInt32(idOrdinal))
-                        ?.Countries.Add(new CountryDTO()
-                    {
-                        Name = reader.GetString(6),
-                    });
+                    trips.Find(t => t.TripDto.Id == sqlid)
+                        ?.TripDto.Countries.Add(new CountryDTO()
+                        {
+                            Name = (string)reader["CountryName"]
+                        });
                 }
             }
         }
-
-        foreach (var trip in trips)
-            Console.WriteLine($"Id: {trip.Id}, Name: {trip.Name}");
         return trips;
     }
 }
