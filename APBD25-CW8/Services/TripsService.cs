@@ -5,20 +5,14 @@ namespace APBD25_CW8.Services;
 
 public class TripsService : ITripsService
 {
-    // private readonly string _connectionString = "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=APBD;Integrated Security=True;";
     private readonly string _connectionString =
-        "Data Source=localhost, 1433; User=SA; Password=yourStrong(!)Password; Initial Catalog=apbd; Integrated Security=False;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False";
-
-    private readonly string _connectionStringAdmin =
-        "Data Source=localhost,1433;User=SA;Password=yourStrong(!)Password;Initial Catalog=master;Encrypt=False;TrustServerCertificate=True";
-
-    private readonly string sqlFileName = "script.sql";
+        "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=apbd;Integrated Security=True;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False";
 
     public async Task<List<TripDTO>> GetTripsAsync(CancellationToken cancellationToken)
     {
         var trips = new List<TripDTO>();
 
-        string command = "SELECT IdTrip, Name FROM Trip";
+        string command = "Select t.IdTrip, t.Name AS TripName, t.Description, t.DateFrom, t.DateTo, t.MaxPeople, C.Name As CountrName from Trip t join dbo.Country_Trip CT on t.IdTrip = CT.IdTrip join dbo.Country C on C.IdCountry = CT.IdCountry";
 
         using (SqlConnection conn = new SqlConnection(_connectionString))
         using (SqlCommand cmd = new SqlCommand(command, conn))
@@ -29,17 +23,29 @@ public class TripsService : ITripsService
             {
                 while (await reader.ReadAsync())
                 {
-                    int idOrdinal = reader.GetOrdinal("IdTrip");
-                    trips.Add(new TripDTO()
+                    int id = (int)reader["IdTrip"];
+                    if (trips.All(t => t.Id != id))
                     {
-                        Id = reader.GetInt32(idOrdinal),
-                        Name = reader.GetString(1),
-                    });
+                        trips.Add(new TripDTO()
+                        {
+                            Id = id,
+                            Name = (string)reader["TripName"],
+                            Description = reader["Description"] as string,
+                            DateFrom = (DateTime)reader["DateFrom"],
+                            DateTo = (DateTime)reader["DateTo"],
+                            MaxPeople = (int)reader["MaxPeople"],
+                            Countries = []
+                        });
+                    }
+                    
+                    trips.Find(t => t.Id == id)
+                        ?.Countries.Add(new CountryDTO()
+                        {
+                            Name = (string)reader["CountrName"]
+                        });
                 }
             }
         }
-
-        Console.WriteLine(trips.Count);
         return trips;
     }
 
@@ -61,10 +67,24 @@ public class TripsService : ITripsService
                 while (await reader.ReadAsync())
                 {
                     int idOrdinal = reader.GetOrdinal("IdTrip");
-                    trips.Add(new TripDTO()
+                    if (trips.All(t => t.Id != idOrdinal))
                     {
-                        Id = reader.GetInt32(idOrdinal),
-                        Name = reader.GetString(1),
+                        trips.Add(new TripDTO()
+                        {
+                            Id = reader.GetInt32(idOrdinal),
+                            Name = reader.GetString(1),
+                            Description = reader.GetString(2),
+                            DateTo = reader.GetDateTime(3),
+                            DateFrom = reader.GetDateTime(4),
+                            MaxPeople = reader.GetInt32(5),
+                            Countries = []
+                        });
+                    }
+                    
+                    trips.Find(t => t.Id == reader.GetInt32(idOrdinal))
+                        ?.Countries.Add(new CountryDTO()
+                    {
+                        Name = reader.GetString(6),
                     });
                 }
             }
@@ -73,17 +93,5 @@ public class TripsService : ITripsService
         foreach (var trip in trips)
             Console.WriteLine($"Id: {trip.Id}, Name: {trip.Name}");
         return trips;
-    }
-
-    public async Task<int> SetupBase(CancellationToken cancellationToken)
-    {
-        var command = await File.ReadAllTextAsync(sqlFileName, cancellationToken);
-        using (SqlConnection conn = new SqlConnection(_connectionStringAdmin))
-        using (SqlCommand cmd = new SqlCommand(command, conn))
-        {
-            await conn.OpenAsync(cancellationToken);
-            var row = await cmd.ExecuteNonQueryAsync(cancellationToken);
-            return row;
-        }
     }
 }

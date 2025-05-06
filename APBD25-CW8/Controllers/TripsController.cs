@@ -11,10 +11,10 @@ namespace APBD25_CW8.Controllers
     {
         private readonly ITripsService _tripsService;
         
-        // public TripsController(ITripsService tripsService)
-        // {
-        // _tripsService = tripsService;
-        // }
+        public TripsController(ITripsService tripsService)
+        {
+        _tripsService = tripsService;
+        }
         
         [HttpGet]
         public async Task<IActionResult> GetTrips(CancellationToken cancellationToken)
