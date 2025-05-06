@@ -12,17 +12,27 @@ namespace APBD25_CW8.Controllers
         ITripsService _tripsService;
         IClientsService _clientsService;
 
+        public ClientsController(ITripsService tripsService, IClientsService clientsService)
+        {
+            _tripsService = tripsService;
+            _clientsService = clientsService;
+        }
+
         [HttpGet("/{id}/trips")]
         public async Task<IActionResult> GetTrips(int id, CancellationToken cancellationToken)
         {
             var tripsById = await _tripsService.GetTripsByIdAsync(id, cancellationToken);
+            if (tripsById.Count == 0)
+                return NotFound();
             return Ok(tripsById);
         }
 
         [HttpPost]
         public async Task<IActionResult> AddTrip([FromBody] ClientDTO client, CancellationToken cancellationToken)
         {
-            var id = _clientsService.CreateClient(client, cancellationToken);
+            var id = await _clientsService.CreateClient(client, cancellationToken);
+            if (id <= 0)
+                return BadRequest();
             return Ok(id);
         }
 

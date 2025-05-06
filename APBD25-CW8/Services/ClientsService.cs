@@ -6,40 +6,31 @@ namespace APBD25_CW8.Services;
 public class ClientsService : IClientsService
 {
     private readonly string _connectionString =
-        "Data Source=localhost, 1433; User=SA; Password=yourStrong(!)Password; Initial Catalog=apbd; Integrated Security=False;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False";
+        "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=apbd;Integrated Security=True;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False";
 
-    public async Task<List<TripDTO>> GetTripsById(int id, CancellationToken cancellationToken)
+    public async Task<int> CreateClient(ClientDTO clientDto, CancellationToken cancellationToken)
     {
-        var trips = new List<TripDTO>();
-
-        string command = "SELECT t.Name AS TripName,t.DateFrom,    t.DateTo,   ct.RegisteredAt,    ct.PaymentDateFROM Client_Trip ctJOIN Trip t ON ct.IdTrip = t.IdTripWHERE ct.IdClient = @id;";
+        string command =
+            @"insert into Client (FirstName, LastName, Email, Telephone, Pesel) values (@FirstName, @LastName, @Email, @Telephone, @Pesel); SELECT CAST(SCOPE_IDENTITY() AS int);";
         using (SqlConnection conn = new SqlConnection(_connectionString))
         using (SqlCommand cmd = new SqlCommand(command, conn))
         {
-            cmd.Parameters.AddWithValue("@id", id);
+            cmd.Parameters.AddWithValue("@FirstName", clientDto.FirstName);
+            cmd.Parameters.AddWithValue("@LastName", clientDto.LastName);
+            cmd.Parameters.AddWithValue("@Email", clientDto.Email);
+            cmd.Parameters.AddWithValue("@Telephone", clientDto.Telephone);
+            cmd.Parameters.AddWithValue("@Pesel", clientDto.Pesel);
             await conn.OpenAsync(cancellationToken);
-
             using (var reader = await cmd.ExecuteReaderAsync(cancellationToken))
             {
+                int id = -1;
                 while (await reader.ReadAsync())
                 {
-                    int idOrdinal = reader.GetOrdinal("IdTrip");
-                    trips.Add(new TripDTO()
-                    {
-                        Id = reader.GetInt32(idOrdinal),
-                        Name = reader.GetString(1),
-                    });
+                   id = reader.GetInt32(0);
                 }
+                return id;
             }
         }
-        
-
-        throw new NotImplementedException();
-    }
-
-    public Task<int> CreateClient(ClientDTO clientDto, CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
     }
 
     public Task<TripDTO> AddTripToClient(int id, int tripId, CancellationToken cancellationToken)
