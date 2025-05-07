@@ -50,7 +50,13 @@ namespace APBD25_CW8.Controllers
         [HttpDelete("/{id}/trips/{tripId}")]
         public async Task<IActionResult> DeleteTrip(int id, int tripId, CancellationToken cancellationToken)
         {
-            return NoContent();
+            var code = await _clientsService.DeleteTripFormClient(id, tripId, cancellationToken);
+            if (code == 0)
+                return NotFound();
+            if(code <= -1)
+                return BadRequest();
+            
+            return Ok();
         }
     }
 }

@@ -7,7 +7,7 @@ public interface IClientsService
    public Task<int> CreateClient(ClientDTO clientDto, CancellationToken cancellationToken);
    
    public Task<int> AddTripToClient(int id,int tripId, CancellationToken cancellationToken);
-   public Task<TripDTO> DeleteTripFormClient(int id,int tripId, CancellationToken cancellationToken);
+   public Task<int> DeleteTripFormClient(int id,int tripId, CancellationToken cancellationToken);
 
     
 }

@@ -110,8 +110,38 @@ public class ClientsService : IClientsService
         return 1;
     }
 
-    public Task<TripDTO> DeleteTripFormClient(int id, int tripId, CancellationToken cancellationToken)
+    public async Task<int> DeleteTripFormClient(int id, int tripId, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        string checkCommand = @"SELECT COUNT(*) FROM Client_Trip where IdTrip =@tripID and IdClient =@id";
+        string deleteCommand = "DELETE FROM Client_Trip WHERE IdTrip = @tripID and IdClient = @id";
+        using (SqlConnection conn = new SqlConnection(_connectionString))
+        {
+            await conn.OpenAsync(cancellationToken);
+            using (SqlCommand cmd = new SqlCommand(checkCommand, conn))
+            {
+                cmd.Parameters.AddWithValue("@tripId", tripId);
+                cmd.Parameters.AddWithValue("@id", id);
+                int people = -1;
+                using (var reader = await cmd.ExecuteReaderAsync(cancellationToken))
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        people = reader.GetInt32(0);
+                    }
+                }
+                if (people<= 0)
+                    return people;
+            }
+
+            using (SqlCommand cmd = new SqlCommand(deleteCommand, conn))
+            {
+                cmd.Parameters.AddWithValue("@tripId", tripId);
+                cmd.Parameters.AddWithValue("@id", id);
+
+                var del = await cmd.ExecuteNonQueryAsync(cancellationToken);
+                
+                return del;
+            }
+        }
     }
 }
