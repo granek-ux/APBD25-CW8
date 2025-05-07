@@ -38,6 +38,8 @@ public class ClientsService : IClientsService
     {
         string checkClientCommand = @"SELECT 1 FROM Client c WHERE c.IdClient = @id ";
         string checkTripCommand = "SELECT MaxPeople FROM Trip WHERE IdTrip = @TripId";
+        string checkPeopleCommand = "SELECT COUNT(*) FROM Client join dbo.Client_Trip CT on Client.IdClient = CT.IdClient where Ct.IdTrip = @TripId";
+        string insertCommand = "insert into Client_Trip (IdClient, IdTrip, RegisteredAt, PaymentDate) values (@id,@tripId,@registeredAt,@PaymentDate)";
         using (SqlConnection conn = new SqlConnection(_connectionString))
         {
             await conn.OpenAsync(cancellationToken);
@@ -75,13 +77,37 @@ public class ClientsService : IClientsService
                     if (maxpeople == -1)
                         return maxpeople;
                 }
-                
-                
+            }
+            
+            using (SqlCommand cmd = new SqlCommand(checkPeopleCommand,conn))
+            {
+                cmd.Parameters.AddWithValue("@tripId", tripId);
+                int people = -1;
+                using (var reader = await cmd.ExecuteReaderAsync(cancellationToken))
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        people = reader.GetInt32(0);
+                    }
+                }
+
+                if (people == -1 || people > maxpeople)
+                    return -1;
+            }
+
+            using (SqlCommand cmd = new SqlCommand(insertCommand, conn))
+            {
+                // DateTime now = DateTime.Now;
+                var now = 07052025;
+                cmd.Parameters.AddWithValue("@id", id);
+                cmd.Parameters.AddWithValue("@tripId", tripId);
+                cmd.Parameters.AddWithValue("@registeredAt", now);
+                cmd.Parameters.AddWithValue("@PaymentDate", DBNull.Value);
+
+                await cmd.ExecuteNonQueryAsync(cancellationToken);
             }
         }
-
-        return 200;
-        throw new NotImplementedException();
+        return 1;
     }
 
     public Task<TripDTO> DeleteTripFormClient(int id, int tripId, CancellationToken cancellationToken)
