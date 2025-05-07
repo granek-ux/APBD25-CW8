@@ -85,7 +85,8 @@ public class TripsService : ITripsService
                                 MaxPeople = (int)reader["MaxPeople"],
                                 Countries = []  
                             },
-                                PaymentDate = (int)reader["PaymentDate"],
+                                // PaymentDate = (int)reader["PaymentDate"],
+                                PaymentDate = reader["PaymentDate"] == DBNull.Value ? (int?)null : Convert.ToInt32(reader["PaymentDate"]),
                                 RegisteredAt = (int)reader["RegisteredAt"],
                         });
                     }
