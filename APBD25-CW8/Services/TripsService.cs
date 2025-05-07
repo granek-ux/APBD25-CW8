@@ -49,56 +49,5 @@ public class TripsService : ITripsService
         return trips;
     }
 
-    public async Task<List<TripForClientDTO>> GetTripsByIdAsync(int id, CancellationToken cancellationToken)
-    {
-        var trips = new List<TripForClientDTO>();
-
-        string command = @"Select t.IdTrip, t.Name AS TripName, t.Description, t.DateFrom, t.DateTo, t.MaxPeople, C.Name AS CountryName, CT2.PaymentDate, CT2.RegisteredAt from Trip t 
-                            join dbo.Country_Trip CT on t.IdTrip = CT.IdTrip 
-                            join dbo.Country C on C.IdCountry = CT.IdCountry 
-                            join dbo.Client_Trip CT2 on CT.IdTrip = CT2.IdTrip 
-                            join dbo.Client C2 on C2.IdClient = CT2.IdClient where C2.IdClient=@id";
-
-        using (SqlConnection conn = new SqlConnection(_connectionString))
-        using (SqlCommand cmd = new SqlCommand(command, conn))
-        {
-            cmd.Parameters.AddWithValue("@id", id);
-            // anty sql incjet
-            await conn.OpenAsync(cancellationToken);
-
-            using (var reader = await cmd.ExecuteReaderAsync(cancellationToken))
-            {
-                while (await reader.ReadAsync())
-                {
-                    int sqlid = (int)reader["IdTrip"];
-                    if (trips.All(t => t.TripDto.Id != sqlid))
-                    {
-                        trips.Add(new TripForClientDTO()
-                        {
-                            TripDto = new TripDTO()
-                            {
-                                Id = sqlid,
-                                Name = (string)reader["TripName"],
-                                Description = reader["Description"] as string,
-                                DateFrom = (DateTime)reader["DateFrom"],
-                                DateTo = (DateTime)reader["DateTo"],
-                                MaxPeople = (int)reader["MaxPeople"],
-                                Countries = []  
-                            },
-                                // PaymentDate = (int)reader["PaymentDate"],
-                                PaymentDate = reader["PaymentDate"] == DBNull.Value ? (int?)null : Convert.ToInt32(reader["PaymentDate"]),
-                                RegisteredAt = (int)reader["RegisteredAt"],
-                        });
-                    }
-                    
-                    trips.Find(t => t.TripDto.Id == sqlid)
-                        ?.TripDto.Countries.Add(new CountryDTO()
-                        {
-                            Name = (string)reader["CountryName"]
-                        });
-                }
-            }
-        }
-        return trips;
-    }
+    
 }

@@ -9,19 +9,17 @@ namespace APBD25_CW8.Controllers
     [ApiController]
     public class ClientsController : ControllerBase
     {
-        ITripsService _tripsService;
         IClientsService _clientsService;
 
-        public ClientsController(ITripsService tripsService, IClientsService clientsService)
+        public ClientsController(IClientsService clientsService)
         {
-            _tripsService = tripsService;
             _clientsService = clientsService;
         }
 
         [HttpGet("/{id}/trips")]
         public async Task<IActionResult> GetTrips(int id, CancellationToken cancellationToken)
         {
-            var tripsById = await _tripsService.GetTripsByIdAsync(id, cancellationToken);
+            var tripsById = await _clientsService.GetTripsByIdAsync(id, cancellationToken);
             if (tripsById.Count == 0)
                 return NotFound();
             return Ok(tripsById);
@@ -35,9 +33,7 @@ namespace APBD25_CW8.Controllers
                 return BadRequest();
             return Ok(id);
         }
-
-
-        // PUT /api/clients/{id}/trips/{tripId
+        
         [HttpPut("/{id}/trips/{tripId}")]
         public async Task<IActionResult> UpdateTrip(int id, int tripId, CancellationToken cancellationToken)
         {
